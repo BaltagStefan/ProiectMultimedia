@@ -1,9 +1,11 @@
 import {
   BatteryCharging,
+  CarFront,
   CircleDot,
   Gauge,
   Lightbulb,
   PackageOpen,
+  PanelsTopLeft,
   Settings2,
   Sofa,
   Wrench,
@@ -24,6 +26,8 @@ const zoneIcons: Record<VehicleZoneId, LucideIcon> = {
   trunk: PackageOpen,
   battery: BatteryCharging,
   interior: Sofa,
+  bodywork: CarFront,
+  glass: PanelsTopLeft,
 };
 
 export function Vehicle3DPage() {

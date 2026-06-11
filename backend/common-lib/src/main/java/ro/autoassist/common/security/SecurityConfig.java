@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -33,6 +34,7 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/health", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
                 .requestMatchers("/api/services/**", "/api/parts/**", "/api/car-brands/**",
                     "/api/car-models/**", "/api/vehicle-zones/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/media/**").permitAll()
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth -> oauth
                 .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
@@ -66,4 +68,3 @@ public class SecurityConfig {
         return source;
     }
 }
-

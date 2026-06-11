@@ -38,6 +38,9 @@ public class PartController {
     @GetMapping("/parts/{id}")
     public Part one(@PathVariable Long id) { return service.one(id); }
 
+    @GetMapping("/parts/categories")
+    public List<PartService.CategoryView> categories() { return service.categories(); }
+
     @PostMapping("/mechanic/parts")
     @PreAuthorize("hasAnyRole('MECHANIC', 'ADMIN')")
     public Part create(@RequestBody Part part) { return service.save(part); }
@@ -50,4 +53,3 @@ public class PartController {
     @PreAuthorize("hasAnyRole('MECHANIC', 'ADMIN')")
     public void delete(@PathVariable Long id) { service.delete(id); }
 }
-

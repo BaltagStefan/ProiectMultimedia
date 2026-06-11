@@ -46,7 +46,18 @@ public class MediaController {
             .body(new InputStreamResource(stream));
     }
 
+    @GetMapping("/{id}/content")
+    public ResponseEntity<InputStreamResource> content(@PathVariable Long id) throws Exception {
+        MediaFile media = service.one(id);
+        InputStream stream = service.download(id);
+        return ResponseEntity.ok()
+            .contentType(MediaType.parseMediaType(media.getMimeType()))
+            .contentLength(media.getFileSize())
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                ContentDisposition.inline().filename(media.getOriginalFileName()).build().toString())
+            .body(new InputStreamResource(stream));
+    }
+
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) throws Exception { service.delete(id); }
 }
-

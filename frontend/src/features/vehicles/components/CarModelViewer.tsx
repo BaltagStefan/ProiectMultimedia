@@ -26,6 +26,8 @@ const focusByZone: Record<VehicleZoneId, [number, number, number]> = {
   trunk: [-2.2, 0.85, 0],
   battery: [1.35, 0.9, -0.55],
   interior: [-0.35, 1.1, 0],
+  bodywork: [0, 1, 0],
+  glass: [-0.35, 1.35, 0],
 };
 
 function PartMaterial({
@@ -157,6 +159,41 @@ function ShellMaterial({ highlighted = false }: { highlighted?: boolean }) {
   );
 }
 
+function GlassPart({
+  component,
+  position,
+  size,
+  rotation,
+  selection,
+}: {
+  component: string;
+  position: [number, number, number];
+  size: [number, number, number];
+  rotation?: [number, number, number];
+  selection: Selection;
+}) {
+  const active = selection.selectedZone === "glass" && selection.selectedComponent === component;
+  const dimmed = selection.selectedZone !== "glass" || selection.selectedComponent !== component;
+  return (
+    <Part zone="glass" component={component} {...selection}>
+      <RoundedBox position={position} args={size} radius={0.045} smoothness={4} rotation={rotation}>
+        <meshPhysicalMaterial
+          color={active ? "#57f287" : "#67e8f9"}
+          emissive={active ? "#22c55e" : "#082f49"}
+          emissiveIntensity={active ? 2.4 : 0.35}
+          metalness={0.05}
+          roughness={0.08}
+          transmission={active ? 0.15 : 0.65}
+          transparent
+          opacity={active ? 0.92 : dimmed ? 0.09 : 0.55}
+          depthWrite={active}
+          side={THREE.DoubleSide}
+        />
+      </RoundedBox>
+    </Part>
+  );
+}
+
 function WheelAssembly({ id, position, selection }: { id: string; position: [number, number, number]; selection: Selection }) {
   const active = selection.selectedZone === "wheels" && selection.selectedComponent === id;
   const dimmed = selection.selectedZone !== "wheels" || selection.selectedComponent !== id;
@@ -231,6 +268,28 @@ function StandardCar({ selection }: { selection: Selection }) {
       <RoundedBox position={[-2.52, 0.64, 0]} args={[0.23, 0.42, 1.7]} radius={0.08} smoothness={3}>
         <ShellMaterial />
       </RoundedBox>
+
+      {/* Selectable body panels */}
+      <BoxPart zone="bodywork" component="front-bumper" position={[2.58, 0.58, 0]} size={[0.25, 0.38, 1.72]} color="#0ea5e9" {...selection} />
+      <BoxPart zone="bodywork" component="rear-bumper" position={[-2.58, 0.57, 0]} size={[0.25, 0.38, 1.72]} color="#0ea5e9" {...selection} />
+      {[-0.88, 0.88].map((z) => (
+        <BoxPart key={`front-door-${z}`} zone="bodywork" component="front-doors" position={[0.1, 1.02, z]} size={[1.18, 0.72, 0.08]} color="#0284c7" {...selection} />
+      ))}
+      {[-0.88, 0.88].map((z) => (
+        <BoxPart key={`rear-door-${z}`} zone="bodywork" component="rear-doors" position={[-1.08, 1.02, z]} size={[1.05, 0.72, 0.08]} color="#0284c7" {...selection} />
+      ))}
+      {[1.42, -1.42].flatMap((x) => [-0.9, 0.9].map((z) => (
+        <BoxPart key={`fender-${x}-${z}`} zone="bodywork" component="front-fenders" position={[x, 0.73, z]} size={[0.78, 0.42, 0.08]} color="#0369a1" {...selection} />
+      )))}
+      <BoxPart zone="bodywork" component="roof-panel" position={[-0.38, 1.7, 0]} size={[2.12, 0.1, 1.48]} color="#0284c7" {...selection} />
+
+      {/* Selectable automotive glass */}
+      <GlassPart component="windshield" position={[0.82, 1.4, 0]} size={[0.09, 0.72, 1.48]} rotation={[0, 0, -0.38]} selection={selection} />
+      <GlassPart component="rear-window" position={[-1.55, 1.4, 0]} size={[0.09, 0.65, 1.42]} rotation={[0, 0, 0.38]} selection={selection} />
+      <GlassPart component="side-glass-front-left" position={[0.15, 1.42, 0.835]} size={[0.9, 0.48, 0.045]} rotation={[0, 0, -0.04]} selection={selection} />
+      <GlassPart component="side-glass-front-right" position={[0.15, 1.42, -0.835]} size={[0.9, 0.48, 0.045]} rotation={[0, 0, -0.04]} selection={selection} />
+      <GlassPart component="side-glass-rear-left" position={[-0.88, 1.42, 0.835]} size={[0.82, 0.48, 0.045]} rotation={[0, 0, 0.04]} selection={selection} />
+      <GlassPart component="side-glass-rear-right" position={[-0.88, 1.42, -0.835]} size={[0.82, 0.48, 0.045]} rotation={[0, 0, 0.04]} selection={selection} />
 
       {/* Hood and fittings */}
       <Part zone="hood" component="hood-panel" {...selection}>

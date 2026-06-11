@@ -6,7 +6,9 @@ export type VehicleZoneId =
   | "headlights"
   | "trunk"
   | "battery"
-  | "interior";
+  | "interior"
+  | "bodywork"
+  | "glass";
 
 export interface VehicleComponent {
   id: string;
@@ -116,6 +118,32 @@ export const vehicleZones: VehicleZone[] = [
       { id: "dashboard", name: "Planșă de bord", description: "Ansamblu bord, instrumentar și aeratoare.", price: 3400, stock: 2, serviceInterval: "La defectare" },
       { id: "steering-wheel", name: "Volan", description: "Volan multifuncțional cu modul de comandă.", price: 920, stock: 7, serviceInterval: "La deteriorare" },
       { id: "center-console", name: "Consolă centrală", description: "Comenzi, schimbător și spațiu de depozitare.", price: 1180, stock: 5, serviceInterval: "La deteriorare" },
+    ],
+  },
+  {
+    id: "bodywork",
+    label: "Caroserie",
+    description: "Panouri exterioare, portiere, bare de protecție și plafon.",
+    components: [
+      { id: "front-bumper", name: "Bară față", description: "Bară frontală completă cu grile și prinderi.", price: 1280, stock: 5, serviceInterval: "La deteriorare" },
+      { id: "rear-bumper", name: "Bară spate", description: "Bară posterioară completă cu suporturi.", price: 1190, stock: 6, serviceInterval: "La deteriorare" },
+      { id: "front-doors", name: "Portiere față", description: "Set panouri portiere față stânga și dreapta.", price: 3100, stock: 3, serviceInterval: "La deteriorare" },
+      { id: "rear-doors", name: "Portiere spate", description: "Set panouri portiere spate stânga și dreapta.", price: 2950, stock: 3, serviceInterval: "La deteriorare" },
+      { id: "front-fenders", name: "Aripi față", description: "Set aripi față stânga și dreapta.", price: 1460, stock: 7, serviceInterval: "La deteriorare" },
+      { id: "roof-panel", name: "Plafon", description: "Panoul metalic superior al caroseriei.", price: 2400, stock: 2, serviceInterval: "La deteriorare" },
+    ],
+  },
+  {
+    id: "glass",
+    label: "Geamuri",
+    description: "Parbriz, lunetă și toate geamurile laterale.",
+    components: [
+      { id: "windshield", name: "Parbriz", description: "Parbriz laminat cu protecție UV și suport senzori.", price: 1250, stock: 8, serviceInterval: "La fisurare" },
+      { id: "rear-window", name: "Lunetă", description: "Lunetă securizată cu sistem de degivrare.", price: 980, stock: 6, serviceInterval: "La fisurare" },
+      { id: "side-glass-front-left", name: "Geam față stânga", description: "Geam lateral securizat pentru portiera șoferului.", price: 420, stock: 10, serviceInterval: "La deteriorare" },
+      { id: "side-glass-front-right", name: "Geam față dreapta", description: "Geam lateral securizat pentru portiera pasagerului.", price: 420, stock: 10, serviceInterval: "La deteriorare" },
+      { id: "side-glass-rear-left", name: "Geam spate stânga", description: "Geam lateral securizat pentru portiera spate.", price: 390, stock: 9, serviceInterval: "La deteriorare" },
+      { id: "side-glass-rear-right", name: "Geam spate dreapta", description: "Geam lateral securizat pentru portiera spate.", price: 390, stock: 9, serviceInterval: "La deteriorare" },
     ],
   },
 ];
