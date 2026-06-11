@@ -25,11 +25,16 @@ else
   TARGET_USER="$(id -un)"
 fi
 
-UBUNTU_CODENAME="${VERSION_CODENAME:-}"
-if [[ -z "$UBUNTU_CODENAME" ]]; then
-  UBUNTU_CODENAME="$(lsb_release -cs 2>/dev/null || true)"
+DETECTED_CODENAME="${UBUNTU_CODENAME:-${VERSION_CODENAME:-}}"
+if [[ -z "$DETECTED_CODENAME" ]]; then
+  DETECTED_CODENAME="$(lsb_release -cs 2>/dev/null || true)"
 fi
-[[ -n "$UBUNTU_CODENAME" ]] || fail "Nu pot determina versiunea Ubuntu."
+DETECTED_CODENAME="$(printf '%s' "$DETECTED_CODENAME" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+if [[ ! "$DETECTED_CODENAME" =~ ^[a-z][a-z0-9-]*$ ]]; then
+  fail "Codename Ubuntu invalid: '${DETECTED_CODENAME:-gol}'."
+fi
+readonly UBUNTU_CODENAME="$DETECTED_CODENAME"
+DOCKER_REPOSITORY_REFRESH=0
 
 run_root() {
   "${SUDO[@]}" "$@"
@@ -42,6 +47,21 @@ apt_update() {
 
 apt_install() {
   run_root env DEBIAN_FRONTEND=noninteractive apt-get install -y "$@"
+}
+
+remove_existing_docker_repository() {
+  local source_file
+  local source_files=(
+    /etc/apt/sources.list.d/docker.list
+    /etc/apt/sources.list.d/docker.sources
+  )
+  for source_file in "${source_files[@]}"; do
+    if [[ -e "$source_file" ]]; then
+      info "Elimin sursa Docker existenta pentru a o recrea corect."
+      run_root rm -f "$source_file"
+      DOCKER_REPOSITORY_REFRESH=1
+    fi
+  done
 }
 
 version_at_least() {
@@ -88,12 +108,15 @@ install_java() {
   else
     info "Pachetul Ubuntu nu este disponibil; configurez Eclipse Temurin."
     run_root install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL https://packages.adoptium.net/artifactory/api/gpg/key/public \
-      | gpg --dearmor \
-      | run_root tee /etc/apt/keyrings/adoptium.gpg >/dev/null
-    printf 'deb [signed-by=/etc/apt/keyrings/adoptium.gpg] https://packages.adoptium.net/artifactory/deb %s main\n' \
-      "$UBUNTU_CODENAME" \
-      | run_root tee /etc/apt/sources.list.d/adoptium.list >/dev/null
+    local adoptium_key adoptium_keyring adoptium_repository
+    adoptium_key="$(mktemp)"
+    adoptium_keyring="$(mktemp)"
+    curl -fsSL https://packages.adoptium.net/artifactory/api/gpg/key/public -o "$adoptium_key"
+    gpg --dearmor --batch --yes --output "$adoptium_keyring" "$adoptium_key"
+    run_root install -m 0644 "$adoptium_keyring" /etc/apt/keyrings/adoptium.gpg
+    rm -f "$adoptium_key" "$adoptium_keyring"
+    adoptium_repository="deb [signed-by=/etc/apt/keyrings/adoptium.gpg] https://packages.adoptium.net/artifactory/deb ${UBUNTU_CODENAME} main"
+    printf '%s\n' "$adoptium_repository" | run_root tee /etc/apt/sources.list.d/adoptium.list >/dev/null
     apt_update
     apt_install temurin-21-jdk
   fi
@@ -181,24 +204,27 @@ install_node() {
   apt_install nodejs
 
   current_major="$(node_major)"
-  [[ "$current_major" =~ ^[0-9]+$ ]] && (( current_major >= 20 )) \
-    || fail "Node.js 20+ nu a fost instalat corect."
+  if [[ ! "$current_major" =~ ^[0-9]+$ ]] || (( current_major < 20 )); then
+    fail "Node.js 20+ nu a fost instalat corect."
+  fi
   require_command npm "Pachetul Node.js instalat nu contine npm."
   success "Node.js $(node --version) si npm $(npm --version) instalate."
 }
 
 configure_docker_repository() {
-  info "Configurez repository-ul oficial Docker..."
+  info "Configurez repository-ul oficial Docker pentru Ubuntu ${UBUNTU_CODENAME}..."
   run_root install -m 0755 -d /etc/apt/keyrings
-  local docker_key
+  local docker_key docker_repository
   docker_key="$(mktemp)"
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o "$docker_key"
   run_root install -m 0644 "$docker_key" /etc/apt/keyrings/docker.asc
   rm -f "$docker_key"
 
-  printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu %s stable\n' \
-    "$(dpkg --print-architecture)" "$UBUNTU_CODENAME" \
-    | run_root tee /etc/apt/sources.list.d/docker.list >/dev/null
+  docker_repository="deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu ${UBUNTU_CODENAME} stable"
+  printf '%s\n' "$docker_repository" | run_root tee /etc/apt/sources.list.d/docker.list >/dev/null
+  if ! grep -Fxq "$docker_repository" /etc/apt/sources.list.d/docker.list; then
+    fail "Repository-ul Docker nu a fost scris corect."
+  fi
   apt_update
 }
 
@@ -208,7 +234,7 @@ install_docker() {
   command -v docker >/dev/null 2>&1 || docker_missing=1
   docker compose version >/dev/null 2>&1 || compose_missing=1
 
-  if [[ "$docker_missing" -eq 0 && "$compose_missing" -eq 0 ]]; then
+  if [[ "$docker_missing" -eq 0 && "$compose_missing" -eq 0 && "$DOCKER_REPOSITORY_REFRESH" -eq 0 ]]; then
     success "Docker si Docker Compose sunt deja instalate."
   else
     configure_docker_repository
@@ -216,8 +242,12 @@ install_docker() {
       info "Instalez Docker Engine si plugin-urile oficiale..."
       apt_install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     else
-      info "Instalez Docker Compose plugin..."
-      apt_install docker-compose-plugin
+      if [[ "$compose_missing" -eq 1 ]]; then
+        info "Instalez Docker Compose plugin..."
+        apt_install docker-compose-plugin
+      else
+        success "Repository-ul Docker a fost reparat."
+      fi
     fi
   fi
 
@@ -225,8 +255,9 @@ install_docker() {
   docker compose version >/dev/null 2>&1 || fail "Docker Compose plugin nu este disponibil."
 
   if command -v systemctl >/dev/null 2>&1; then
-    run_root systemctl enable --now docker 2>/dev/null \
-      || info "Docker nu a putut fi pornit prin systemd; porneste serviciul manual."
+    if ! run_root systemctl enable --now docker 2>/dev/null; then
+      info "Docker nu a putut fi pornit prin systemd; porneste serviciul manual."
+    fi
   fi
 
   if [[ "$TARGET_USER" != "root" ]] && ! id -nG "$TARGET_USER" | tr ' ' '\n' | grep -qx docker; then
@@ -261,6 +292,7 @@ install_pm2() {
   success "PM2 $(pm2 --version) instalat."
 }
 
+remove_existing_docker_repository
 install_base_packages
 install_java
 install_maven
