@@ -19,7 +19,17 @@ public class PartService {
     }
 
     public List<Part> search(String query, Long zoneId) {
-        return repository.search(blankToNull(query), zoneId);
+        String normalizedQuery = blankToNull(query);
+        if (normalizedQuery == null && zoneId == null) {
+            return repository.findAllByOrderByCreatedAtDesc();
+        }
+        if (normalizedQuery == null) {
+            return repository.findByZoneIdOrderByCreatedAtDesc(zoneId);
+        }
+        if (zoneId == null) {
+            return repository.findByNameContainingIgnoreCaseOrderByCreatedAtDesc(normalizedQuery);
+        }
+        return repository.findByZoneIdAndNameContainingIgnoreCaseOrderByCreatedAtDesc(zoneId, normalizedQuery);
     }
 
     public Part one(Long id) {
