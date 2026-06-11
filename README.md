@@ -64,6 +64,27 @@ Ordinea automată este:
 ./scripts/status.sh
 ```
 
+## Reluare după o pornire întreruptă
+
+Dacă infrastructura Docker este deja pornită, actualizați proiectul și rulați din nou
+scriptul complet. Operația este idempotentă:
+
+```bash
+cd ProiectMultimedia
+git pull
+./scripts/start-all.sh
+```
+
+Verificare:
+
+```bash
+docker ps
+pm2 status
+./scripts/status.sh
+```
+
+Nu folosiți `pm2 list all`; comanda corectă este `pm2 status`.
+
 ## URL-uri
 
 - Frontend Nginx: http://localhost
