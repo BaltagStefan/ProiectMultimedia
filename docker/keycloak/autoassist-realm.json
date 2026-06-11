@@ -1,0 +1,73 @@
+{
+  "realm": "autoassist",
+  "enabled": true,
+  "displayName": "AutoAssist 3D",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "roles": {
+    "realm": [
+      { "name": "USER", "description": "AutoAssist customer" },
+      { "name": "MECHANIC", "description": "Service mechanic" },
+      { "name": "ADMIN", "description": "Platform administrator" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "autoassist-web",
+      "name": "AutoAssist Web",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [
+        "http://localhost/*",
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "http://localhost",
+        "http://localhost:5173"
+      ],
+      "protocol": "openid-connect",
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost/*##http://localhost:5173/*"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "user",
+      "email": "user@autoassist.local",
+      "firstName": "Andrei",
+      "lastName": "Popescu",
+      "enabled": true,
+      "emailVerified": true,
+      "realmRoles": ["USER"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "user",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "mecanic",
+      "email": "mecanic@autoassist.local",
+      "firstName": "Mihai",
+      "lastName": "Ionescu",
+      "enabled": true,
+      "emailVerified": true,
+      "realmRoles": ["MECHANIC"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "mecanic",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}
+

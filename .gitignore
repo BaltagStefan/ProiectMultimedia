@@ -1,0 +1,13 @@
+config/env/**/*.env
+!config/env/**/*.env.example
+logs/
+runtime/nginx/html/*
+!runtime/nginx/html/.gitkeep
+backend/**/target/
+frontend/dist/
+frontend/node_modules/
+.idea/
+.vscode/
+*.iml
+*.log
+

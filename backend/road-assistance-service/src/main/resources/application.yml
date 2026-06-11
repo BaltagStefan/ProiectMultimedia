@@ -1,0 +1,14 @@
+server.port: ${SERVER_PORT:8098}
+spring:
+  application.name: road-assistance-service
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/autoassist}
+    username: ${DATABASE_USERNAME:autoassist}
+    password: ${DATABASE_PASSWORD:autoassist}
+  jpa:
+    open-in-view: false
+    hibernate.ddl-auto: validate
+  flyway.enabled: true
+  security.oauth2.resourceserver.jwt.issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/autoassist}
+management.endpoints.web.exposure.include: health,info
+

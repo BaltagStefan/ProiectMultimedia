@@ -1,0 +1,60 @@
+server:
+  port: ${SERVER_PORT:8088}
+
+spring:
+  application:
+    name: api-gateway
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/autoassist}
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origin-patterns: "http://localhost:*"
+            allowed-methods: "*"
+            allowed-headers: "*"
+            allow-credentials: true
+      routes:
+        - id: auth-profile
+          uri: http://localhost:8091
+          predicates:
+            - Path=/api/me/**,/api/users/**
+        - id: vehicle
+          uri: http://localhost:8092
+          predicates:
+            - Path=/api/vehicles/**,/api/car-brands/**,/api/car-models/**,/api/vehicle-zones/**,/api/users/me/cars/**
+        - id: parts
+          uri: http://localhost:8093
+          predicates:
+            - Path=/api/parts/**,/api/mechanic/parts/**
+        - id: service-locator
+          uri: http://localhost:8094
+          predicates:
+            - Path=/api/services/**
+        - id: appointments
+          uri: http://localhost:8095
+          predicates:
+            - Path=/api/appointments/**,/api/users/me/appointments/**,/api/mechanic/appointments/**
+        - id: chat
+          uri: http://localhost:8096
+          predicates:
+            - Path=/api/conversations/**,/api/messages/**
+        - id: media
+          uri: http://localhost:8097
+          predicates:
+            - Path=/api/media/**
+        - id: road-assistance
+          uri: http://localhost:8098
+          predicates:
+            - Path=/api/road-assistance/**,/api/users/me/road-assistance/**,/api/mechanic/road-assistance/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
