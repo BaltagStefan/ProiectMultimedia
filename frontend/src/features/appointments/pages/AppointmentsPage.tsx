@@ -1,5 +1,6 @@
 import { CalendarDays, Car, CheckCircle2, Clock3, MapPin, Plus, X } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../../../shared/components/Button";
 import { api } from "../../../shared/services/api";
 import { AppointmentView, AutoServiceView, errorMessage } from "../../../shared/services/workflows";
@@ -15,13 +16,29 @@ const statusLabels: Record<AppointmentView["status"], string> = {
 type Filter = "ALL" | AppointmentView["status"];
 
 export function AppointmentsPage() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const appointmentMode = searchParams.get("mode");
+  const installationMode = appointmentMode === "installation";
+  const diagnosticMode = appointmentMode === "diagnostic";
+  const prefilledMode = installationMode || diagnosticMode;
+  const requestedPartId = Number(searchParams.get("partId")) || null;
+  const requestedItemName = searchParams.get("partName") ?? searchParams.get("itemName") ?? "";
+  const requestedServiceName = searchParams.get("serviceName") ?? "AutoTech Nord";
+
   const [appointments, setAppointments] = useState<AppointmentView[]>([]);
   const [services, setServices] = useState<AutoServiceView[]>([]);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(prefilledMode);
   const [filter, setFilter] = useState<Filter>("ALL");
   const [serviceId, setServiceId] = useState<number | null>(null);
   const [date, setDate] = useState("");
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState(
+    installationMode
+      ? `Montaj piesă: ${requestedItemName}`
+      : diagnosticMode
+        ? `Diagnoză componentă: ${requestedItemName}`
+        : "",
+  );
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -34,11 +51,15 @@ export function AppointmentsPage() {
       setAppointments(appointmentsResponse.data);
       const workshopServices = servicesResponse.data.filter((item) => item.type === "PLATFORM_PARTNER");
       setServices(workshopServices);
-      setServiceId((current) => current ?? workshopServices[0]?.id ?? null);
+      setServiceId((current) => {
+        if (current) return current;
+        const requestedService = workshopServices.find((item) => item.name === requestedServiceName);
+        return requestedService?.id ?? workshopServices[0]?.id ?? null;
+      });
     } catch (requestError) {
       setError(errorMessage(requestError));
     }
-  }, []);
+  }, [requestedServiceName]);
 
   useEffect(() => {
     void load();
@@ -47,7 +68,7 @@ export function AppointmentsPage() {
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (!serviceId || !date || !description.trim()) {
-      setError("Completează service-ul, data și descrierea.");
+      setError(prefilledMode ? "Selectează data și ora programării." : "Completează service-ul, data și descrierea.");
       return;
     }
     setSaving(true);
@@ -56,13 +77,14 @@ export function AppointmentsPage() {
       await api.post("/appointments", {
         serviceId,
         carId: null,
-        partId: null,
+        partId: installationMode ? requestedPartId : null,
         appointmentTime: new Date(date).toISOString(),
         description: description.trim(),
       });
       setShowForm(false);
       setDate("");
       setDescription("");
+      if (prefilledMode) navigate("/programari", { replace: true });
       await load();
       window.dispatchEvent(new Event("autoassist:notifications"));
     } catch (requestError) {
@@ -89,6 +111,7 @@ export function AppointmentsPage() {
   );
 
   const count = (status: AppointmentView["status"]) => appointments.filter((item) => item.status === status).length;
+  const selectedService = services.find((service) => service.id === serviceId);
 
   return (
     <>
@@ -97,14 +120,23 @@ export function AppointmentsPage() {
         <Button onClick={() => setShowForm((value) => !value)}><Plus /> Programare nouă</Button>
       </div>
       {showForm && (
-        <form className="glass-card inline-form" onSubmit={submit}>
-          <h3>Programare rapidă</h3>
-          <select value={serviceId ?? ""} onChange={(event) => setServiceId(Number(event.target.value))}>
-            {services.map((service) => <option value={service.id} key={service.id}>{service.name} · {service.address}</option>)}
-          </select>
+        <form className={`glass-card inline-form ${prefilledMode ? "installation-form" : ""}`} onSubmit={submit}>
+          <h3>{installationMode ? "Programare montaj" : diagnosticMode ? "Programare diagnoză" : "Programare rapidă"}</h3>
+          {prefilledMode ? (
+            <div className="appointment-prefill">
+              <div><span>SERVICE</span><b>{selectedService?.name ?? requestedServiceName}</b></div>
+              <div><span>{installationMode ? "PIESĂ PENTRU MONTAJ" : "COMPONENTĂ PENTRU DIAGNOZĂ"}</span><b>{requestedItemName}</b></div>
+            </div>
+          ) : (
+            <select value={serviceId ?? ""} onChange={(event) => setServiceId(Number(event.target.value))}>
+              {services.map((service) => <option value={service.id} key={service.id}>{service.name} · {service.address}</option>)}
+            </select>
+          )}
           <input type="datetime-local" value={date} min={new Date().toISOString().slice(0, 16)} onChange={(event) => setDate(event.target.value)} />
-          <input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Descrie problema" />
-          <Button type="submit" disabled={saving}>{saving ? "Se trimite..." : "Trimite cererea"}</Button>
+          {!prefilledMode && <input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Descrie problema" />}
+          <Button type="submit" disabled={saving || (prefilledMode && !serviceId)}>
+            {saving ? "Se trimite..." : prefilledMode ? "Creează programarea" : "Trimite cererea"}
+          </Button>
         </form>
       )}
       {error && <div className="inline-error page-error">{error}</div>}

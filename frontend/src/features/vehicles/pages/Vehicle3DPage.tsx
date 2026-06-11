@@ -33,6 +33,7 @@ export function Vehicle3DPage() {
   const zone = getVehicleZone(selectedZone);
   const component = zone.components.find((item) => item.id === selectedComponent) ?? zone.components[0];
   const ZoneIcon = zoneIcons[selectedZone];
+  const diagnosticUrl = `/programari?mode=diagnostic&itemName=${encodeURIComponent(component.name)}&componentId=${encodeURIComponent(component.id)}&serviceName=${encodeURIComponent("AutoTech Nord")}`;
 
   const selectZone = (zoneId: VehicleZoneId) => {
     const nextZone = getVehicleZone(zoneId);
@@ -110,7 +111,7 @@ export function Vehicle3DPage() {
             <div><span>Service recomandat</span><b>{component.serviceInterval}</b></div>
             <div><span>Stoc compatibil</span><b>{component.stock} buc.</b></div>
           </div>
-          <Link className="button secondary" to="/programari">Programează diagnoza</Link>
+          <Link className="button secondary" to={diagnosticUrl}>Programează diagnoza</Link>
         </aside>
       </div>
 
