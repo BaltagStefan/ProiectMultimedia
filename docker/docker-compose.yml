@@ -38,6 +38,8 @@ services:
   minio-init:
     image: minio/mc:RELEASE.2025-04-16T18-13-26Z
     container_name: autoassist-minio-init
+    profiles:
+      - init
     depends_on:
       minio:
         condition: service_healthy
@@ -88,4 +90,3 @@ volumes:
   postgres_data:
   minio_data:
   keycloak_data:
-
