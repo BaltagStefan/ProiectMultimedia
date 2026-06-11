@@ -22,7 +22,7 @@ spring:
         - id: auth-profile
           uri: http://localhost:8091
           predicates:
-            - Path=/api/me/**,/api/users/**
+            - Path=/api/me,/api/users,/api/users/{id}
         - id: vehicle
           uri: http://localhost:8092
           predicates:
