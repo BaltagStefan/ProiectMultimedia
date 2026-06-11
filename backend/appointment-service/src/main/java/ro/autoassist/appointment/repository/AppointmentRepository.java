@@ -1,13 +1,9 @@
 package ro.autoassist.appointment.repository;
 
-import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.time.OffsetDateTime;
 import java.util.List;
 
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import ro.autoassist.appointment.dto.AppointmentDtos;
@@ -20,24 +16,14 @@ public class AppointmentRepository {
     public AppointmentDtos.View create(AppointmentDtos.Create input, String keycloakId, String username) {
         Long userId = jdbc.query("SELECT id FROM users_local WHERE keycloak_id = ?",
             rs -> rs.next() ? rs.getLong(1) : null, keycloakId);
-        KeyHolder key = new GeneratedKeyHolder();
-        jdbc.update(connection -> {
-            PreparedStatement statement = connection.prepareStatement("""
-                INSERT INTO appointments(user_id, user_subject, requester_name, service_id, car_id,
-                                         part_id, appointment_time, description)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, Statement.RETURN_GENERATED_KEYS);
-            if (userId == null) statement.setNull(1, java.sql.Types.BIGINT); else statement.setLong(1, userId);
-            statement.setString(2, keycloakId);
-            statement.setString(3, username);
-            statement.setObject(4, input.serviceId());
-            statement.setObject(5, input.carId());
-            statement.setObject(6, input.partId());
-            statement.setObject(7, input.appointmentTime());
-            statement.setString(8, input.description());
-            return statement;
-        }, key);
-        AppointmentDtos.View created = findById(key.getKey().longValue());
+        Long id = jdbc.queryForObject("""
+            INSERT INTO appointments(user_id, user_subject, requester_name, service_id, car_id,
+                                     part_id, appointment_time, description)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            RETURNING id
+            """, Long.class, userId, keycloakId, username, input.serviceId(), input.carId(),
+            input.partId(), input.appointmentTime(), input.description());
+        AppointmentDtos.View created = findById(id);
         notifyRole("MECHANIC", "APPOINTMENT", "Programare nouă",
             username + " a trimis o cerere de programare.", "APPOINTMENT", created.id());
         return created;
