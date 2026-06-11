@@ -7,7 +7,7 @@ public final class AppointmentDtos {
     public record Create(Long serviceId, Long carId, Long partId, OffsetDateTime appointmentTime,
                          String description) {}
     public record View(Long id, Long serviceId, String serviceName, Long carId, Long partId,
-                       OffsetDateTime appointmentTime, String status, String description) {}
+                       OffsetDateTime appointmentTime, String status, String description,
+                       String requesterName) {}
     public record StatusUpdate(String status) {}
 }
-

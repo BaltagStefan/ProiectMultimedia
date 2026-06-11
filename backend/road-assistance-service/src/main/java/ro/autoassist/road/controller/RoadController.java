@@ -3,6 +3,8 @@ package ro.autoassist.road.controller;
 import java.util.List;
 
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,10 +23,15 @@ public class RoadController {
     public RoadController(RoadService service) { this.service = service; }
 
     @PostMapping("/road-assistance")
-    public RoadDtos.View create(@RequestBody RoadDtos.Create input) { return service.create(input); }
+    public RoadDtos.View create(@RequestBody RoadDtos.Create input, @AuthenticationPrincipal Jwt jwt) {
+        String username = jwt.getClaimAsString("preferred_username");
+        return service.create(input, jwt.getSubject(), username == null ? "Utilizator" : username);
+    }
 
     @GetMapping("/users/me/road-assistance")
-    public List<RoadDtos.View> mine() { return service.all(); }
+    public List<RoadDtos.View> mine(@AuthenticationPrincipal Jwt jwt) {
+        return service.mine(jwt.getSubject());
+    }
 
     @GetMapping("/mechanic/road-assistance")
     @PreAuthorize("hasAnyRole('MECHANIC', 'ADMIN')")
@@ -36,4 +43,3 @@ public class RoadController {
         return service.status(id, input.status());
     }
 }
-

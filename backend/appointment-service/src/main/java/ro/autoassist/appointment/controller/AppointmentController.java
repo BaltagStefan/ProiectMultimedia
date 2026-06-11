@@ -25,11 +25,18 @@ public class AppointmentController {
     @PostMapping("/appointments")
     public AppointmentDtos.View create(@RequestBody AppointmentDtos.Create input,
                                         @AuthenticationPrincipal Jwt jwt) {
-        return service.create(input, jwt.getSubject());
+        return service.create(input, jwt.getSubject(), username(jwt));
     }
 
     @GetMapping("/users/me/appointments")
-    public List<AppointmentDtos.View> mine() { return service.all(); }
+    public List<AppointmentDtos.View> mine(@AuthenticationPrincipal Jwt jwt) {
+        return service.mine(jwt.getSubject());
+    }
+
+    @PutMapping("/users/me/appointments/{id}/cancel")
+    public AppointmentDtos.View cancel(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        return service.cancel(id, jwt.getSubject());
+    }
 
     @GetMapping("/mechanic/appointments")
     @PreAuthorize("hasAnyRole('MECHANIC', 'ADMIN')")
@@ -41,5 +48,9 @@ public class AppointmentController {
                                        @RequestBody AppointmentDtos.StatusUpdate input) {
         return service.status(id, input.status());
     }
-}
 
+    private String username(Jwt jwt) {
+        String username = jwt.getClaimAsString("preferred_username");
+        return username == null || username.isBlank() ? "Utilizator" : username;
+    }
+}

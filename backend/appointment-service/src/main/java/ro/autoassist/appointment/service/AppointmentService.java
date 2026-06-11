@@ -17,12 +17,23 @@ public class AppointmentService {
     public AppointmentService(AppointmentRepository repository) { this.repository = repository; }
 
     @Transactional
-    public AppointmentDtos.View create(AppointmentDtos.Create input, String subject) {
-        if (input.appointmentTime() == null) throw new IllegalArgumentException("Data este obligatorie.");
-        return repository.create(input, subject);
+    public AppointmentDtos.View create(AppointmentDtos.Create input, String subject, String username) {
+        if (input.appointmentTime() == null || input.serviceId() == null) {
+            throw new IllegalArgumentException("Service-ul și data sunt obligatorii.");
+        }
+        if (input.appointmentTime().isBefore(java.time.OffsetDateTime.now())) {
+            throw new IllegalArgumentException("Programarea trebuie să fie în viitor.");
+        }
+        return repository.create(input, subject, username);
     }
 
     public List<AppointmentDtos.View> all() { return repository.all(); }
+    public List<AppointmentDtos.View> mine(String subject) { return repository.mine(subject); }
+
+    @Transactional
+    public AppointmentDtos.View cancel(Long id, String subject) {
+        return repository.cancelOwn(id, subject);
+    }
 
     @Transactional
     public AppointmentDtos.View status(Long id, String status) {
@@ -30,4 +41,3 @@ public class AppointmentService {
         return repository.updateStatus(id, status);
     }
 }
-

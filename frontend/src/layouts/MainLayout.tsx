@@ -14,10 +14,12 @@ import {
   Wrench,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { NavLink, Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../features/auth/hooks/useAuth";
 import { Loading } from "../shared/components/Loading";
+import { NotificationCenter } from "../shared/components/NotificationCenter";
+import type { UnreadSummary } from "../shared/services/workflows";
 
 const userNav = [
   { to: "/dashboard", label: "Dashboard", icon: Gauge },
@@ -44,6 +46,8 @@ const mechanicNav = [
 export function MainLayout() {
   const auth = useAuth();
   const [open, setOpen] = useState(false);
+  const [unread, setUnread] = useState<UnreadSummary>({ messages: 0, notifications: 0, total: 0 });
+  const updateUnread = useCallback((summary: UnreadSummary) => setUnread(summary), []);
 
   if (!auth.ready) return <Loading />;
   if (!auth.authenticated) return <Navigate to="/" replace />;
@@ -74,6 +78,7 @@ export function MainLayout() {
               className={({ isActive }) => (isActive ? "nav-item active" : "nav-item")}>
               <Icon size={19} />
               <span>{label}</span>
+              {to === "/chat" && unread.messages > 0 && <b className="nav-badge">{unread.messages}</b>}
               <ChevronRight className="nav-chevron" size={16} />
             </NavLink>
           ))}
@@ -89,6 +94,7 @@ export function MainLayout() {
             <span className="status-dot" />
             Toate sistemele operaționale
           </div>
+          <NotificationCenter mechanic={mechanic} onSummary={updateUnread} />
           <div className="user-pill">
             <div className="avatar">{auth.username.slice(0, 1).toUpperCase()}</div>
             <div><strong>{auth.username}</strong><span>{mechanic ? "Mecanic autorizat" : "Șofer"}</span></div>
@@ -100,4 +106,3 @@ export function MainLayout() {
     </div>
   );
 }
-

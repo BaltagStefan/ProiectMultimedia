@@ -8,10 +8,11 @@ const colors = {
   ROAD_ASSISTANCE: "#22c55e",
 };
 
-export function ServicesMap({ items, activeId, onSelect }: {
+export function ServicesMap({ items, activeId, onSelect, linkDetails = true }: {
   items: AutoService[];
   activeId?: number;
   onSelect?: (service: AutoService) => void;
+  linkDetails?: boolean;
 }) {
   return (
     <MapContainer center={[44.435, 26.102]} zoom={12} scrollWheelZoom className="leaflet-map">
@@ -22,11 +23,10 @@ export function ServicesMap({ items, activeId, onSelect }: {
           pathOptions={{ color: colors[service.type], fillColor: colors[service.type], fillOpacity: .85, weight: 3 }}
           eventHandlers={{ click: () => onSelect?.(service) }}>
           <Popup>
-            <div className="map-popup"><b>{service.name}</b><span>{service.address}</span><strong>★ {service.rating}</strong><Link to={`/service-uri/${service.id}`}>Vezi detalii</Link></div>
+            <div className="map-popup"><b>{service.name}</b><span>{service.address}</span><strong>★ {service.rating}</strong>{linkDetails && <Link to={`/service-uri/${service.id}`}>Vezi detalii</Link>}</div>
           </Popup>
         </CircleMarker>
       ))}
     </MapContainer>
   );
 }
-

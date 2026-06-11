@@ -42,7 +42,7 @@ spring:
         - id: chat
           uri: http://localhost:8096
           predicates:
-            - Path=/api/conversations/**,/api/messages/**
+            - Path=/api/conversations/**,/api/messages/**,/api/notifications/**
         - id: media
           uri: http://localhost:8097
           predicates:
@@ -57,4 +57,3 @@ management:
     web:
       exposure:
         include: health,info
-
