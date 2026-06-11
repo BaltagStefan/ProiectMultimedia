@@ -27,7 +27,20 @@ chmod +x scripts/*.sh
 ./scripts/install.sh
 ```
 
-Scriptul verifică toate cerințele, creează fișierele `.env` fără a suprascrie configurații existente și instalează dependențele frontend.
+Pe Ubuntu, scriptul instalează automat dependențele lipsă:
+
+- Java 21;
+- Apache Maven 3.9+;
+- Node.js 24 LTS și npm;
+- Docker Engine și Docker Compose plugin;
+- PM2;
+- dependențele frontend.
+
+Versiunile compatibile deja instalate sunt păstrate. Scriptul creează și fișierele
+`.env` fără a suprascrie configurațiile existente.
+
+Dacă utilizatorul este adăugat pentru prima dată în grupul `docker`, este necesară
+o delogare și autentificare nouă înainte de `./scripts/start-all.sh`.
 
 ## Pornire completă
 
@@ -108,4 +121,3 @@ Convențiile nodurilor sunt documentate în `frontend/public/models/README.md`.
 Fișierele reale sunt create în `config/env/` din fișierele `.env.example`. Scriptul `create-env.sh` nu suprascrie fișiere existente.
 
 PM2 folosește `pm2/ecosystem.config.js`, iar logurile sunt scrise în `logs/pm2/`.
-
